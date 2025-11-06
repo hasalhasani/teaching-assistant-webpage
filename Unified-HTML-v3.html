@@ -1,0 +1,2000 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وزارة التعليم - المساعد الموحد</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --moe-green: #008A76;
+            --moe-light-green: #2a9d60;
+            --bg-main: #FFFFFF;
+            --bg-secondary: #F5F7FA;
+            --message-user: #E8F5F3;
+            --message-bot: #008A76;
+            --border-color: #E5E7EB;
+            --text-primary: #1F2937;
+            --text-secondary: #6B7280;
+            --sidebar-width: 280px;
+            --red: #c82333;
+            --success-bg: #d4edda;
+            --error-bg: #f8d7da;
+        }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--moe-green) 0%, #007566 100%);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s;
+        }
+        .sidebar.collapsed { width: 70px; }
+        .sidebar-header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .sidebar-logo {
+            width: 48px;
+            height: 48px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 700;
+            white-space: nowrap;
+            transition: opacity 0.3s;
+        }
+        .sidebar.collapsed .sidebar-title { opacity: 0; display: none; }
+        .sidebar-nav { flex: 1; padding: 16px 0; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-right: 3px solid transparent;
+            color: rgba(255,255,255,0.8);
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: rgba(255,255,255,0.15); border-right-color: white; color: white; }
+        .nav-icon { font-size: 24px; flex-shrink: 0; }
+        .nav-text { font-size: 15px; font-weight: 500; white-space: nowrap; transition: opacity 0.3s; }
+        .sidebar.collapsed .nav-text { opacity: 0; display: none; }
+        .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .toggle-btn {
+            width: 100%;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .header {
+            background: var(--bg-main);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-title h1 { font-size: 20px; color: var(--text-primary); }
+        .header-title p { font-size: 13px; color: var(--text-secondary); }
+        .lang-toggle {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .content-section { display: none; flex: 1; overflow: hidden; }
+        .content-section.active { display: flex; flex-direction: column; }
+        
+        /* Chat Styles */
+        .messages-container { flex: 1; overflow-y: auto; padding: 24px; }
+        .messages-wrapper { max-width: 800px; margin: 0 auto; }
+        .welcome-screen {
+            text-align: center;
+            padding: 60px 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 32px;
+        }
+        .welcome-logo {
+            width: 80px;
+            height: 80px;
+            background: var(--moe-green);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 32px;
+        }
+        .welcome-title { font-size: 28px; font-weight: 700; color: var(--text-primary); margin-bottom: 8px; }
+        .welcome-subtitle { font-size: 16px; color: var(--text-secondary); max-width: 500px; }
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            width: 100%;
+            max-width: 700px;
+        }
+        .quick-action-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .quick-action-card:hover {
+            background: var(--moe-green);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .quick-action-icon { font-size: 24px; margin-bottom: 8px; }
+        .quick-action-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+        .quick-action-desc { font-size: 13px; opacity: 0.8; }
+        .message {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            animation: fadeIn 0.4s;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .message.user { flex-direction: row-reverse; }
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .message.bot .message-avatar { background: var(--moe-green); color: white; }
+        .message.user .message-avatar { background: var(--bg-secondary); color: var(--text-primary); }
+        .message-bubble {
+            padding: 16px 20px;
+            border-radius: 12px;
+            line-height: 1.6;
+            font-size: 15px;
+            max-width: 75%;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        .message.bot .message-bubble { background: var(--bg-secondary); color: var(--text-primary); }
+        .message.user .message-bubble { background: var(--moe-green); color: white; }
+        .typing-indicator {
+            display: none;
+            padding: 16px 20px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            width: fit-content;
+        }
+        .typing-indicator.active { display: flex; gap: 6px; }
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--moe-green);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing { 0%, 60%, 100% { transform: scale(1); opacity: 0.4; } 30% { transform: scale(1.2); opacity: 1; } }
+        .input-container {
+            border-top: 1px solid var(--border-color);
+            background: var(--bg-main);
+            padding: 20px 24px;
+        }
+        .input-wrapper { max-width: 800px; margin: 0 auto; }
+        .input-box {
+            display: flex;
+            gap: 12px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: 16px;
+            padding: 12px 16px;
+        }
+        .input-box:focus-within { border-color: var(--moe-green); background: white; }
+        .chat-input {
+            flex: 1;
+            border: none;
+            background: transparent;
+            font-size: 15px;
+            font-family: inherit;
+            outline: none;
+            resize: none;
+            max-height: 150px;
+            min-height: 38px;
+        }
+        .send-btn {
+            width: 36px;
+            height: 36px;
+            background: var(--moe-green);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        /* Content Creation Styles */
+        .content-form-container { flex: 1; overflow-y: auto; padding: 40px 24px; }
+        .content-form-wrapper { max-width: 900px; margin: 0 auto; }
+        .intro-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+            border: 3px solid #e8f8f5;
+        }
+        .intro-card h2 { color: var(--moe-green); font-size: 2em; margin-bottom: 15px; }
+        .intro-card p { color: #666; font-size: 1.1em; line-height: 1.7; }
+        .form-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+        .form-group { margin-bottom: 25px; }
+        .form-group label { display: block; margin-bottom: 10px; font-weight: bold; color: #333; font-size: 1.1em; }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e8f8f5;
+            border-radius: 12px;
+            font-size: 1em;
+            background: #f9f9f9;
+            font-family: inherit;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: var(--moe-green);
+            background: white;
+        }
+        .submit-btn {
+            background: linear-gradient(135deg, var(--moe-green) 0%, #007566 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            font-family: inherit;
+        }
+        .submit-btn:hover { transform: translateY(-3px); }
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+        .loading-indicator.show { display: block; }
+        .result-card {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+            border-right: 5px solid var(--moe-green);
+        }
+        .result-card.show { display: block; }
+        .result-card h3 {
+            color: var(--moe-green);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e8f8f5;
+        }
+        .result-content { color: #333; font-size: 1.05em; line-height: 1.9; }
+        .file-upload-area {
+            border: 2px dashed rgba(0,138,118,0.5);
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(0,138,118,0.05);
+            cursor: pointer;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .file-upload-area.dragover { border-color: var(--moe-green); background: rgba(0,138,118,0.1); }
+        .file-upload-icon { font-size: 48px; margin-bottom: 16px; }
+        .file-upload-text { color: var(--text-primary); font-size: 16px; margin-bottom: 8px; font-weight: 500; }
+        .file-upload-hint { color: var(--text-secondary); font-size: 14px; }
+        .attached-files { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+        .file-tag {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0,138,118,0.1);
+            border: 1px solid rgba(0,138,118,0.3);
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .file-tag-name { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .file-tag-remove { cursor: pointer; color: #c82333; font-size: 18px; margin-left: 8px; }
+        .markdown-output {
+            background: #fbfcfd;
+            border-radius: 10px;
+            padding: 14px;
+            border: 1px solid #eef4f2;
+            white-space: pre-wrap;
+        }
+
+        /* Quiz Assessment Styles */
+        .quiz-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .loading-screen {
+            background: white;
+            border-radius: 15px;
+            padding: 60px 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            margin-bottom: 25px;
+        }
+        .loading-screen.hidden { display: none; }
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--moe-green);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 25px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-title { font-size: 24px; color: var(--text-primary); margin-bottom: 10px; font-weight: 700; }
+        .loading-subtitle { font-size: 16px; color: var(--text-secondary); margin-bottom: 20px; }
+        .loading-icon { font-size: 64px; margin-bottom: 20px; }
+
+        .progress-container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        .progress-container.visible { display: block; }
+        .progress-text { font-size: 16px; color: var(--text-primary); margin-bottom: 10px; font-weight: 600; }
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: var(--border-color);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--moe-green) 0%, var(--moe-light-green) 100%);
+            border-radius: 20px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .question-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            animation: fadeIn 0.4s ease;
+            display: none;
+        }
+        .question-card.visible { display: block; }
+        .question-number { color: var(--moe-green); font-size: 18px; font-weight: 600; margin-bottom: 15px; }
+        .question-text { font-size: 22px; color: var(--text-primary); margin-bottom: 25px; font-weight: 700; line-height: 1.6; }
+        
+        .answers-grid {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .answer-btn {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            padding: 18px 25px;
+            font-size: 18px;
+            font-family: inherit;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: right;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .answer-btn:hover:not(:disabled) {
+            border-color: var(--moe-green);
+            background: #f0f9f4;
+            transform: translateX(-5px);
+        }
+        .answer-btn:disabled { cursor: not-allowed; }
+        .answer-btn.selected {
+            border-color: var(--moe-green);
+            background: #e8f5f3;
+        }
+        .answer-btn.selected .answer-label {
+            background: var(--moe-green);
+            color: white;
+        }
+        .answer-label {
+            background: var(--border-color);
+            color: #555;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .answer-btn.correct {
+            background: var(--success-bg);
+            border-color: var(--moe-green);
+            animation: correctPulse 0.5s ease;
+        }
+        .answer-btn.correct .answer-label {
+            background: var(--moe-green);
+            color: white;
+        }
+        .answer-btn.incorrect {
+            background: var(--error-bg);
+            border-color: var(--red);
+            animation: incorrectShake 0.5s ease;
+        }
+        .answer-btn.incorrect .answer-label {
+            background: var(--red);
+            color: white;
+        }
+        @keyframes correctPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.03); } }
+        @keyframes incorrectShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+        .navigation {
+            display: none;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .navigation.visible { display: flex; }
+        .nav-btn {
+            background: var(--moe-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0, 138, 118, 0.3);
+        }
+        .nav-btn:hover:not(:disabled) {
+            background: var(--moe-light-green);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 138, 118, 0.4);
+        }
+        .nav-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        .results-screen {
+            background: white;
+            border-radius: 15px;
+            padding: 50px 30px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease;
+            display: none;
+        }
+        .results-screen.visible { display: block; }
+        .results-icon { font-size: 80px; margin-bottom: 20px; }
+        .results-title { font-size: 32px; color: var(--moe-green); margin-bottom: 20px; font-weight: 700; }
+        .results-score { font-size: 48px; color: var(--text-primary); margin-bottom: 15px; font-weight: 700; }
+        .results-percentage { font-size: 24px; color: var(--text-secondary); margin-bottom: 30px; }
+        .results-message { font-size: 20px; color: #555; margin-bottom: 40px; line-height: 1.6; }
+        .results-actions { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; }
+        .action-btn {
+            background: var(--moe-green);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 15px 35px;
+            font-size: 18px;
+            font-family: inherit;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .action-btn:hover {
+            background: var(--moe-light-green);
+            transform: translateY(-2px);
+        }
+        .action-btn.secondary {
+            background: white;
+            color: var(--moe-green);
+            border: 2px solid var(--moe-green);
+        }
+        .action-btn.secondary:hover { background: #f0f9f4; }
+
+        /* Content Creation Styles */
+        .content-type-group {
+            margin-bottom: 30px;
+        }
+        .content-type-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .content-type-option {
+            position: relative;
+        }
+        .content-type-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .content-type-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 25px 15px;
+            border: 3px solid #e8f8f5;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #f9f9f9;
+            text-align: center;
+            height: 100%;
+        }
+        .content-type-label:hover {
+            border-color: var(--moe-green);
+            background: white;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 138, 118, 0.2);
+        }
+        .content-type-option input[type="radio"]:checked + .content-type-label {
+            border-color: var(--moe-green);
+            background: linear-gradient(135deg, rgba(0, 138, 118, 0.1) 0%, rgba(0, 138, 118, 0.05) 100%);
+            box-shadow: 0 5px 15px rgba(0, 138, 118, 0.3);
+        }
+        .content-type-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+        .content-type-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+        .content-type-desc {
+            font-size: 0.9em;
+            color: #666;
+        }
+        .content-submit-btn {
+            background: linear-gradient(135deg, var(--moe-green) 0%, #007566 100%);
+            color: white;
+            padding: 18px 40px;
+            border: none;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-family: inherit;
+        }
+        .content-submit-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0, 138, 118, 0.3);
+        }
+        .content-submit-btn:active {
+            transform: translateY(0);
+        }
+        .content-submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .content-loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+        }
+        .content-loading.show {
+            display: block;
+        }
+        .content-loading p {
+            color: #666;
+            font-size: 1.1em;
+            margin-top: 20px;
+        }
+        .content-result-card {
+            display: none;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            margin-top: 20px;
+            border-left: 5px solid var(--moe-green);
+        }
+        .content-result-card.show {
+            display: block;
+        }
+        .content-result-card h3 {
+            color: var(--moe-green);
+            font-size: 1.5em;
+            margin-bottom: 20px;
+        }
+        .content-result-card .result-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+        .content-result-card .result-info p {
+            margin-bottom: 10px;
+        }
+        .content-result-card .result-info strong {
+            color: var(--moe-green);
+        }
+        .content-result-card .result-content {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: 0; top: 0; height: 100vh; transform: translateX(-100%); z-index: 2000; }
+            .sidebar.mobile-open { transform: translateX(0); }
+            .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1500; }
+            .mobile-overlay.active { display: block; }
+            .mobile-menu-btn { display: flex !important; }
+            .quick-actions { grid-template-columns: 1fr; }
+            .question-text { font-size: 18px; }
+            .answer-btn { font-size: 16px; padding: 15px 20px; }
+            .nav-btn { padding: 12px 30px; font-size: 16px; }
+            .results-score { font-size: 36px; }
+        }
+        .mobile-menu-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        .hidden { display: none !important; }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div class="mobile-overlay" id="mobileOverlay"></div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">وزارة</div>
+            <div class="sidebar-title">وزارة التعليم</div>
+        </div>
+        <nav class="sidebar-nav">
+            <div class="nav-item active" data-section="quiz">
+                <div class="nav-icon">🧩</div>
+                <div class="nav-text">تقييم الاختبارات</div>
+            </div>
+            <div class="nav-item" data-section="content">
+                <div class="nav-icon">🧠</div>
+                <div class="nav-text">إنشاء المحتوى</div>
+            </div>
+            <div class="nav-item" data-section="exam">
+                <div class="nav-icon">📝</div>
+                <div class="nav-text">الامتحانات النهائية</div>
+            </div>
+            <div class="nav-item" data-section="quiz-assessment">
+                <div class="nav-icon">🎯</div>
+                <div class="nav-text">الاختبارات التفاعلية</div>
+            </div>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="toggle-btn" id="toggleSidebar">◀</button>
+        </div>
+    </aside>
+    <main class="main-content">
+        <header class="header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+                <div class="header-title">
+                    <h1>مساعد وزارة التعليم</h1>
+                    <p>كيف يمكنني مساعدتك اليوم؟</p>
+                </div>
+            </div>
+            <button class="lang-toggle" id="langToggle">EN</button>
+        </header>
+
+        <!-- Chat Section -->
+        <section class="content-section active" id="quizSection">
+            <div class="messages-container">
+                <div class="messages-wrapper" id="messagesWrapper">
+                    <div class="welcome-screen" id="welcomeScreen">
+                        <div class="welcome-logo">وزارة</div>
+                        <div>
+                            <h2 class="welcome-title">مرحباً بك في مساعد وزارة التعليم</h2>
+                            <p class="welcome-subtitle">أنا هنا لمساعدتك في الإجابة على استفساراتك حول خدمات وزارة التعليم</p>
+                        </div>
+                        <div class="quick-actions">
+                            <div class="quick-action-card" data-message="أريد التقديم على وظيفة">
+                                <div class="quick-action-icon">💼</div>
+                                <div class="quick-action-title">التقديم على وظيفة</div>
+                                <div class="quick-action-desc">معلومات عن الوظائف المتاحة</div>
+                            </div>
+                            <div class="quick-action-card" data-message="أريد معرفة التقويم الأكاديمي">
+                                <div class="quick-action-icon">📅</div>
+                                <div class="quick-action-title">التقويم الأكاديمي</div>
+                                <div class="quick-action-desc">مواعيد الدراسة والإجازات</div>
+                            </div>
+                            <div class="quick-action-card" data-message="أنشئ اختباراً قصيراً من 5 أسئلة في الرياضيات">
+                                <div class="quick-action-icon">📝</div>
+                                <div class="quick-action-title">إنشاء اختبار سريع</div>
+                                <div class="quick-action-desc">اختبار متعدد الخيارات تلقائي</div>
+                            </div>
+                            <div class="quick-action-card" data-message="ابدأ اختباراً تفاعلياً">
+                                <div class="quick-action-icon">🎯</div>
+                                <div class="quick-action-title">اختبار تفاعلي</div>
+                                <div class="quick-action-desc">اختبار مع تصحيح فوري</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="input-box">
+                        <textarea class="chat-input" id="chatInput" rows="1" placeholder="اكتب رسالتك هنا..."></textarea>
+                        <button class="send-btn" id="sendBtn" disabled title="إرسال">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Assessment Section -->
+        <section class="content-section" id="quiz-assessmentSection">
+            <div class="quiz-container">
+                <!-- Loading State -->
+                <div id="loadingScreen" class="loading-screen hidden">
+                    <div class="loading-icon">📚</div>
+                    <div class="spinner"></div>
+                    <h2 class="loading-title">الرجاء الانتظار...</h2>
+                    <p class="loading-subtitle">جاري تحميل الأسئلة من النظام</p>
+                </div>
+
+                <!-- Progress Bar -->
+                <div id="progressContainer" class="progress-container">
+                    <div class="progress-text" id="progressText">السؤال 1 من 10</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+
+                <!-- Question Card -->
+                <div id="questionCard" class="question-card">
+                    <div class="question-number" id="questionNumber">السؤال 1</div>
+                    <div class="question-text" id="questionText"></div>
+                    <div class="answers-grid" id="answersGrid"></div>
+                </div>
+
+                <!-- Navigation -->
+                <div id="navigation" class="navigation">
+                    <button class="nav-btn" id="prevBtn">السابق</button>
+                    <button class="nav-btn" id="nextBtn">التالي</button>
+                </div>
+
+                <!-- Results Screen -->
+                <div id="resultsScreen" class="results-screen">
+                    <div class="results-icon" id="resultsIcon">🎉</div>
+                    <h2 class="results-title">انتهى الاختبار!</h2>
+                    <div class="results-score" id="resultsScore">0/0</div>
+                    <div class="results-percentage" id="resultsPercentage">0%</div>
+                    <p class="results-message" id="resultsMessage"></p>
+                    <div class="results-actions">
+                        <button class="action-btn" id="retakeBtn">إعادة الاختبار</button>
+                        <button class="action-btn secondary" id="backToChatBtn">العودة للمحادثة</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Content Creation Section -->
+        <section class="content-section" id="contentSection">
+            <div class="content-form-container">
+                <div class="content-form-wrapper">
+                    <!-- Intro Card -->
+                    <div class="intro-card">
+                        <h2>🎓 مرحباً بك في منصة إنشاء المحتوى التعليمي</h2>
+                        <p>أنشئ محتوى تعليمي متميز باستخدام الذكاء الاصطناعي - عروض تقديمية، أوراق عمل، ومحتوى PDF مصمم خصيصاً للمناهج السعودية</p>
+                    </div>
+
+                    <!-- Form Card -->
+                    <div class="form-card">
+                        <form id="contentForm">
+                            <!-- Content Type Selection -->
+                            <div class="content-type-group">
+                                <label>نوع المحتوى المطلوب</label>
+                                <div class="content-type-grid">
+                                    <div class="content-type-option">
+                                        <input type="radio" id="typeEducational" name="contentType" value="educational" checked>
+                                        <label for="typeEducational" class="content-type-label">
+                                            <div class="content-type-icon">📄</div>
+                                            <div class="content-type-name">محتوى تعليمي</div>
+                                            <div class="content-type-desc"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="content-type-option">
+                                        <input type="radio" id="typePresentation" name="contentType" value="presentation">
+                                        <label for="typePresentation" class="content-type-label">
+                                            <div class="content-type-icon">📊</div>
+                                            <div class="content-type-name">عرض تقديمي</div>
+                                            <div class="content-type-desc"></div>
+                                        </label>
+                                    </div>
+
+                                    <div class="content-type-option">
+                                        <input type="radio" id="typeWorksheet" name="contentType" value="worksheet">
+                                        <label for="typeWorksheet" class="content-type-label">
+                                            <div class="content-type-icon">📝</div>
+                                            <div class="content-type-name">ورقة عمل</div>
+                                            <div class="content-type-desc"></div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Subject Selection -->
+                            <div class="form-group">
+                                <label>المادة الدراسية</label>
+                                <select id="contentSubject" required>
+                                    <option value="">اختر المادة</option>
+                                    <option value="الرياضيات">الرياضيات</option>
+                                    <option value="العلوم">العلوم</option>
+                                    <option value="الحاسب الآلي">الحاسب الآلي</option>
+                                    <option value="التاريخ">التاريخ</option>
+                                    <option value="الجغرافيا">الجغرافيا</option>
+                                    <option value="الفيزياء">الفيزياء</option>
+                                    <option value="الكيمياء">الكيمياء</option>
+                                    <option value="الأحياء">الأحياء</option>
+                                </select>
+                            </div>
+
+                            <!-- Topic Input -->
+                            <div class="form-group">
+                                <label>عنوان الموضوع</label>
+                                <input type="text" id="contentTopic" placeholder="مثال: الكسور العشرية، الجهاز الهضمي، البرمجة..." required>
+                            </div>
+
+                            <!-- Grade Selection -->
+                            <div class="form-group">
+                                <label>المستوى الدراسي</label>
+                                <select id="contentGrade" required>
+                                    <option value="">اختر المستوى</option>
+                                    <option value="الأول الابتدائي">الأول الابتدائي</option>
+                                    <option value="الثاني الابتدائي">الثاني الابتدائي</option>
+                                    <option value="الثالث الابتدائي">الثالث الابتدائي</option>
+                                    <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                                    <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                                    <option value="السادس الابتدائي">السادس الابتدائي</option>
+                                    <option value="الأول المتوسط">الأول المتوسط</option>
+                                    <option value="الثاني المتوسط">الثاني المتوسط</option>
+                                    <option value="الثالث المتوسط">الثالث المتوسط</option>
+                                    <option value="الأول الثانوي">الأول الثانوي</option>
+                                    <option value="الثاني الثانوي">الثاني الثانوي</option>
+                                    <option value="الثالث الثانوي">الثالث الثانوي</option>
+                                </select>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <button type="submit" class="content-submit-btn" id="contentSubmitBtn">
+                                <span>إنشاء المحتوى</span>
+                                <span>✨</span>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Loading Indicator -->
+                    <div id="contentLoading" class="content-loading">
+                        <div class="spinner"></div>
+                        <p id="contentLoadingText">جاري إنشاء المحتوى التعليمي...</p>
+                    </div>
+
+                    <!-- Result Card -->
+                    <div id="contentResult" class="content-result-card">
+                        <h3>✅ تم إنشاء المحتوى بنجاح!</h3>
+                        <div class="result-info" id="contentResultInfo"></div>
+                        <div class="result-content" id="contentResultText"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Exam Section -->
+        <section class="content-section" id="examSection">
+            <div class="content-form-container">
+                <div class="content-form-wrapper">
+                    <div class="intro-card">
+                        <h2>إنشاء وتصحيح الامتحانات النهائية</h2>
+                        <p>قم بإنشاء امتحانات نهائية احترافية أو تصحيح امتحانات موجودة</p>
+                    </div>
+                    <div class="form-card">
+                        <div class="file-upload-area" id="examFileUpload">
+                            <div class="file-upload-icon">📎</div>
+                            <div class="file-upload-text">اسحب الملفات هنا أو انقر للاختيار</div>
+                            <div class="file-upload-hint">يدعم: PDF, DOC, DOCX, TXT, صور</div>
+                            <input type="file" id="examFileInput" multiple accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg" style="display:none;">
+                        </div>
+                        <div class="attached-files" id="examAttachedFiles"></div>
+                        <form id="examForm">
+                            <div class="form-group">
+                                <label>نوع العملية</label>
+                                <select id="examType" required>
+                                    <option value="">اختر العملية</option>
+                                    <option value="create">إنشاء امتحان جديد</option>
+                                    <option value="correct">تصحيح امتحان موجود</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>المستوى الدراسي</label>
+                                <select id="examGrade" required>
+                                    <option value="">اختر المستوى</option>
+                                    <option value="الأول الابتدائي">الأول الابتدائي</option>
+                                    <option value="الثاني الابتدائي">الثاني الابتدائي</option>
+                                    <option value="الثالث الابتدائي">الثالث الابتدائي</option>
+                                    <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                                    <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                                    <option value="السادس الابتدائي">السادس الابتدائي</option>
+                                    <option value="الأول متوسط">الأول متوسط</option>
+                                    <option value="الثاني متوسط">الثاني متوسط</option>
+                                    <option value="الثالث متوسط">الثالث متوسط</option>
+                                    <option value="الأول ثانوي">الأول ثانوي</option>
+                                    <option value="الثاني ثانوي">الثاني ثانوي</option>
+                                    <option value="الثالث ثانوي">الثالث ثانوي</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="examTrackGroup" style="display:none;">
+                                <label>المسار</label>
+                                <select id="examTrack" required>
+                                    <option value="">اختر المسار</option>
+                                    <option value="العام">العام</option>
+                                    <option value="علوم الحاسب والهندسة">علوم الحاسب والهندسة</option>
+                                    <option value="الصحة والحياة">الصحة والحياة</option>
+                                    <option value="إدارة الأعمال">إدارة الأعمال</option>
+                                    <option value="الشرعي">الشرعي</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>المادة الدراسية</label>
+                                <select id="examSubject" required disabled>
+                                    <option value="">اختر المستوى أولاً</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>التعليمات للذكاء الاصطناعي</label>
+                                <input type="text" id="examTopic" placeholder="مثال: الفصل الاول وعدد الاسئلة ونوعها" required>
+                            </div>
+                            <button type="submit" class="submit-btn">معالجة الامتحان 📄</button>
+                        </form>
+                    </div>
+                    <div class="loading-indicator" id="examLoading">
+                        <div class="spinner"></div>
+                        <p style="color:#666;font-size:1.1em;">جاري معالجة الامتحان...</p>
+                    </div>
+                    <div class="result-card" id="examResult">
+                        <h3>✅ تمت العملية بنجاح!</h3>
+                        <div id="examResultInfo" style="background:#f8f9fa;padding:15px;border-radius:10px;margin-bottom:20px;"></div>
+                        <div class="result-content" id="examResultText"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        /* --------------------
+           Configuration & State
+           -------------------- */
+           //n8n webhook
+        const WEBHOOK_URL = 'http://localhost:5678/webhook-test/MOE-test';
+        let currentLanguage = 'ar';
+        let sessionId = 'session_' + Date.now();
+        let isProcessing = false;
+        let uploadedFiles = [];
+
+        /* Quiz Assessment State */
+        let quizQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let quizScore = 0;
+        let quizActive = false;
+
+        /* --------------------
+           Element refs
+           -------------------- */
+        const sidebar = document.getElementById('sidebar');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const langToggle = document.getElementById('langToggle');
+        const navItems = document.querySelectorAll('.nav-item');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const messagesWrapper = document.getElementById('messagesWrapper');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const quickActions = document.querySelectorAll('.quick-action-card');
+        const contentForm = document.getElementById('contentForm');
+        const examForm = document.getElementById('examForm');
+        const examFileUpload = document.getElementById('examFileUpload');
+        const examFileInput = document.getElementById('examFileInput');
+        const examAttachedFiles = document.getElementById('examAttachedFiles');
+
+        /* Quiz Assessment Elements */
+        const loadingScreen = document.getElementById('loadingScreen');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressText = document.getElementById('progressText');
+        const progressFill = document.getElementById('progressFill');
+        const questionCard = document.getElementById('questionCard');
+        const questionNumber = document.getElementById('questionNumber');
+        const questionText = document.getElementById('questionText');
+        const answersGrid = document.getElementById('answersGrid');
+        const navigation = document.getElementById('navigation');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const resultsScreen = document.getElementById('resultsScreen');
+        const resultsIcon = document.getElementById('resultsIcon');
+        const resultsScore = document.getElementById('resultsScore');
+        const resultsPercentage = document.getElementById('resultsPercentage');
+        const resultsMessage = document.getElementById('resultsMessage');
+        const retakeBtn = document.getElementById('retakeBtn');
+        const backToChatBtn = document.getElementById('backToChatBtn');
+
+        const contentLoading = document.getElementById('contentLoading');
+        const contentResult = document.getElementById('contentResult');
+        const contentResultInfo = document.getElementById('contentResultInfo');
+        const contentResultText = document.getElementById('contentResultText');
+
+        const examLoading = document.getElementById('examLoading');
+        const examResult = document.getElementById('examResult');
+        const examResultInfo = document.getElementById('examResultInfo');
+        const examResultText = document.getElementById('examResultText');
+
+   /* --------------------
+           Quiz Assessment Functions
+           -------------------- */
+        window.startQuizAssessment = function() {
+            // Hide chat section and show quiz section
+            document.getElementById('quizSection').classList.remove('active');
+            document.getElementById('quiz-assessmentSection').classList.add('active');
+            
+            // Update navigation
+            navItems.forEach(n => n.classList.remove('active'));
+            document.querySelector('[data-section="quiz-assessment"]').classList.add('active');
+            
+            // Load sample quiz questions
+            loadSampleQuizQuestions();
+        }
+
+        function loadSampleQuizQuestions() {
+    // Show loading screen
+    loadingScreen.classList.remove('hidden');
+    progressContainer.classList.remove('visible');
+    questionCard.classList.remove('visible');
+    navigation.classList.remove('visible');
+    resultsScreen.classList.remove('visible');
+
+    
+    if (Array.isArray(quizQuestions) && quizQuestions.length > 0) {
+        setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+            currentQuestionIndex = 0;
+            userAnswers = new Array(quizQuestions.length).fill(null);
+            quizScore = 0;
+            quizActive = true;
+            showQuestion();
+        }, 1500);
+        return;
+    }
+
+    
+}
+
+
+        function showQuestion() {
+            if (currentQuestionIndex >= quizQuestions.length) {
+                showResults();
+                return;
+            }
+
+            const question = quizQuestions[currentQuestionIndex];
+            
+            // Update progress
+            progressContainer.classList.add('visible');
+            progressText.textContent = `السؤال ${currentQuestionIndex + 1} من ${quizQuestions.length}`;
+            progressFill.style.width = `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%`;
+
+            // Update question
+            questionCard.classList.add('visible');
+            questionNumber.textContent = `السؤال ${currentQuestionIndex + 1}`;
+            questionText.textContent = question.question;
+
+            // Clear and populate answers
+answersGrid.innerHTML = '';
+question.options.forEach((option, index) => {
+    const answerBtn = document.createElement('button');
+    answerBtn.className = 'answer-btn';
+    answerBtn.innerHTML = `
+        <div class="answer-label">${String.fromCharCode(65 + index)}</div>
+        <div>${option}</div>
+    `;
+    answerBtn.addEventListener('click', () => selectAnswer(index));
+    
+    // If question was already answered, show the result
+    if (userAnswers[currentQuestionIndex] !== null) {
+        answerBtn.disabled = true;
+        const correctIndex = question.correct;
+        
+        if (index === correctIndex) {
+            answerBtn.classList.add('correct');
+        } else if (index === userAnswers[currentQuestionIndex]) {
+            answerBtn.classList.add('incorrect');
+        }
+    }
+    
+    answersGrid.appendChild(answerBtn);
+});
+
+            // Update navigation
+            navigation.classList.add('visible');
+            prevBtn.disabled = currentQuestionIndex === 0;
+            nextBtn.textContent = currentQuestionIndex === quizQuestions.length - 1 ? 'إنهاء' : 'التالي';
+
+            // Restore previous answer if exists
+            if (userAnswers[currentQuestionIndex] !== null) {
+                const answerButtons = answersGrid.querySelectorAll('.answer-btn');
+                answerButtons[userAnswers[currentQuestionIndex]].classList.add('selected');
+            }
+        }
+
+        function selectAnswer(answerIndex) {
+    const question = quizQuestions[currentQuestionIndex];
+    const correctAnswerIndex = question.correct;
+    const answerButtons = answersGrid.querySelectorAll('.answer-btn');
+    
+    // Store answer
+    userAnswers[currentQuestionIndex] = answerIndex;
+    
+    // Check if correct
+    const isCorrect = answerIndex === correctAnswerIndex;
+    if (isCorrect) {
+        quizScore++;
+    }
+    
+    // Disable all buttons and show results
+    answerButtons.forEach((btn, idx) => {
+        btn.disabled = true;
+        
+        if (idx === correctAnswerIndex) {
+            btn.classList.add('correct');
+        } else if (idx === answerIndex && !isCorrect) {
+            btn.classList.add('incorrect');
+        }
+    });
+}
+
+        function nextQuestion() {
+            if (userAnswers[currentQuestionIndex] === null) {
+                alert('الرجاء اختيار إجابة قبل الانتقال للسؤال التالي');
+                return;
+            }
+
+            currentQuestionIndex++;
+            showQuestion();
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                showQuestion();
+            }
+        }
+
+        function showResults() {
+            // Calculate score
+            quizScore = 0;
+            userAnswers.forEach((answer, index) => {
+                if (answer === quizQuestions[index].correct) {
+                    quizScore++;
+                }
+            });
+
+            const percentage = Math.round((quizScore / quizQuestions.length) * 100);
+
+            // Hide quiz elements
+            progressContainer.classList.remove('visible');
+            questionCard.classList.remove('visible');
+            navigation.classList.remove('visible');
+
+            // Show results
+            resultsScreen.classList.add('visible');
+            resultsScore.textContent = `${quizScore}/${quizQuestions.length}`;
+            resultsPercentage.textContent = `${percentage}%`;
+
+            // Set appropriate message and icon
+            if (percentage >= 80) {
+                resultsIcon.textContent = '🎉';
+                resultsMessage.textContent = 'ممتاز! لقد أحرزت نتيجة رائعة!';
+            } else if (percentage >= 60) {
+                resultsIcon.textContent = '👍';
+                resultsMessage.textContent = 'جيد! يمكنك تحقيق نتائج أفضل في المرة القادمة.';
+            } else {
+                resultsIcon.textContent = '💪';
+                resultsMessage.textContent = 'حاول مرة أخرى! الممارسة تجعلك أفضل.';
+            }
+        }
+
+        function retakeQuiz() {
+            resultsScreen.classList.remove('visible');
+            loadSampleQuizQuestions();
+        }
+
+        function backToChat() {
+            // Hide quiz section and show chat section
+            document.getElementById('quiz-assessmentSection').classList.remove('active');
+            document.getElementById('quizSection').classList.add('active');
+            
+            // Update navigation
+            navItems.forEach(n => n.classList.remove('active'));
+            document.querySelector('[data-section="quiz"]').classList.add('active');
+            
+            // Reset quiz state
+            quizActive = false;
+        }
+
+        /* --------------------
+           UI helpers
+           -------------------- */
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            document.documentElement.lang = lang === 'ar' ? 'ar' : 'en';
+            document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+            const chatPlaceholder = lang === 'ar' ? 'اكتب رسالتك هنا...' : 'Type your message...';
+            chatInput.placeholder = chatPlaceholder;
+            langToggle.textContent = lang === 'ar' ? 'EN' : 'عربي';
+        }
+
+        function scrollMessagesToBottom() {
+            const container = document.querySelector('.messages-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        function createMessageElement({ from = 'bot', text = '', time = null }) {
+            const wrapper = document.createElement('div');
+            wrapper.className = from === 'user' ? 'message user' : 'message bot';
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            avatar.textContent = from === 'user' ? (currentLanguage === 'ar' ? 'أنت' : 'You') : (currentLanguage === 'ar' ? 'المساعد' : 'Bot');
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.innerHTML = text;
+            wrapper.appendChild(avatar);
+            wrapper.appendChild(bubble);
+            return wrapper;
+        }
+
+        function appendMessage(opts) {
+            if (welcomeScreen && welcomeScreen.parentNode) {
+                welcomeScreen.parentNode.removeChild(welcomeScreen);
+            }
+            const el = createMessageElement(opts);
+            messagesWrapper.appendChild(el);
+            scrollMessagesToBottom();
+        }
+
+        function showTypingIndicator(show = true) {
+            const existing = document.getElementById('typingIndicator');
+            if (show) {
+                if (existing) return;
+                const typing = document.createElement('div');
+                typing.id = 'typingIndicator';
+                typing.className = 'typing-indicator active';
+                typing.innerHTML = `<span></span><span></span><span></span>`;
+                const wrap = document.createElement('div');
+                wrap.className = 'message bot';
+                const avatar = document.createElement('div');
+                avatar.className = 'message-avatar';
+                avatar.textContent = currentLanguage === 'ar' ? 'المساعد' : 'Bot';
+                wrap.appendChild(avatar);
+                wrap.appendChild(typing);
+                messagesWrapper.appendChild(wrap);
+                scrollMessagesToBottom();
+            } else {
+                if (existing) {
+                    existing.parentNode && existing.parentNode.remove();
+                }
+            }
+        }
+
+        /* --------------------
+           Chat / webhook logic
+           -------------------- */
+        async function sendChatToWebhook(messageText) {
+            if (isProcessing) return;
+            isProcessing = true;
+            appendMessage({ from: 'user', text: escapeHtml(messageText) });
+            showTypingIndicator(true);
+            disableInput(true);
+
+            try {
+                // Check if user wants to create a quiz
+                if (messageText.includes('أنشئ') && messageText.includes('اختبار')) {
+                    // Extract subject and number of questions
+                    const subject = messageText.includes('رياضيات') ? 'الرياضيات' : 
+                                   messageText.includes('علوم') ? 'العلوم' : 
+                                   messageText.includes('عربية') ? 'اللغة العربية' : 'عام';
+                    
+                    const numQuestions = (messageText.match(/(\d+)\s*(سؤال|أسئلة)/) || [5])[1];
+                    
+                    // Simulate AI response with quiz data
+                    const quizResponse = await generateQuizFromAI(subject, parseInt(numQuestions));
+                    
+                    appendMessage({ 
+                        from: 'bot', 
+                        text: `تم إنشاء اختبار ${subject} مكون من ${numQuestions} أسئلة! <br><br>
+                               <buttonon click="window.startQuizAssessment()" style="background: #008A76; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+                               ابدأ الاختبار الآن 🎯
+                               </button>`
+                    });
+                } else {
+                    const payload = {
+                        sessionId,
+                        chatInput: messageText,
+                        language: currentLanguage,
+                        action: 'chat',
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    const res = await fetch(WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const text = await res.text();
+                        throw new Error(`Webhook error: ${res.status} ${res.statusText}`);
+                    }
+
+                    const data = await res.json().catch(() => ({}));
+                    let botReply;
+
+// If n8n returns a quiz array
+if (Array.isArray(data.output) && data.output[0]?.question) {
+    quizQuestions = data.output; // store quiz globally
+
+    botReply = `تم إنشاء اختبار مكون من ${data.output.length} أسئلة في ${messageText.includes('math') ? 'الرياضيات' : 'الموضوع المطلوب'} 🎯<br><br>
+                سيتم بدء الاختبار الآن...`;
+
+    appendMessage({ from: 'bot', text: botReply });
+
+    // 👇 Automatically start quiz
+    setTimeout(() => {
+        window.startQuizAssessment();
+    }, 1500);
+} else {
+    botReply = data.output || data.message || data.response || data.reply || data.text || 'عذراً، حدث خطأ في الاتصال.';
+    appendMessage({ from: 'bot', text: escapeHtml(botReply) });
+}
+
+                }
+            } catch (err) {
+                appendMessage({ from: 'bot', text: `<strong>خطأ:</strong> ${escapeHtml(err.message)}` });
+            } finally {
+                showTypingIndicator(false);
+                disableInput(false);
+                isProcessing = false;
+            }
+        }
+
+        async function generateQuizFromAI(subject, numQuestions) {
+            // This would be replaced with actual AI integration
+            // For now, we'll return sample quiz data
+            return [
+                {
+                    output: [
+                        {
+                            question: {
+                                "ما هو ناتج 8 + 7؟": {
+                                    "A": "13",
+                                    "B": "15",
+                                    "C": "14",
+                                    "D": "16"
+                                }
+                            },
+                            correct_answer: "B"
+                        },
+                        {
+                            question: {
+                                "ما هي عاصمة المملكة العربية السعودية؟": {
+                                    "A": "جدة",
+                                    "B": "الرياض",
+                                    "C": "مكة",
+                                    "D": "المدينة"
+                                }
+                            },
+                            correct_answer: "B"
+                        }
+                    ]
+                }
+            ];
+        }
+
+        function disableInput(disabled) {
+            chatInput.disabled = disabled;
+            sendBtn.disabled = disabled || chatInput.value.trim() === '';
+        }
+
+        /* --------------------
+           Content Creation Flow
+           -------------------- */
+        contentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isProcessing) return;
+            
+            // Get form data
+            const contentType = document.querySelector('input[name="contentType"]:checked').value;
+            const subject = document.getElementById('contentSubject').value;
+            const topic = document.getElementById('contentTopic').value.trim();
+            const grade = document.getElementById('contentGrade').value;
+            
+            if (!contentType || !subject || !topic || !grade) {
+                return alert('يرجى ملء جميع الحقول.');
+            }
+
+            // Update loading text based on content type
+            const loadingMessages = {
+                'educational': 'جاري إنشاء المحتوى التعليمي...',
+                'presentation': 'جاري إنشاء العرض التقديمي...',
+                'worksheet': 'جاري إنشاء ورقة العمل...'
+            };
+            document.getElementById('contentLoadingText').textContent = loadingMessages[contentType];
+
+            contentLoading.classList.add('show');
+            contentResult.classList.remove('show');
+            document.getElementById('contentSubmitBtn').disabled = true;
+            isProcessing = true;
+
+            try {
+                const payload = {
+                    sessionId,
+                    contentType: contentType,
+                    type: 'content_generation',
+                    language: currentLanguage,
+                    subject,
+                    topic,
+                    grade,
+                    timestamp: new Date().toISOString()
+                };
+
+                const res = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(`Webhook returned ${res.status}: ${txt}`);
+                }
+
+                const data = await res.json().catch(() => ({}));
+                
+                // Display info
+                const contentTypeNames = {
+                    'educational': 'محتوى تعليمي',
+                    'presentation': 'عرض تقديمي',
+                    'worksheet': 'ورقة عمل'
+                };
+                
+                contentResultInfo.innerHTML = `
+                    <p><strong>📋 نوع المحتوى:</strong> ${contentTypeNames[contentType]}</p>
+                    <p><strong>📖 المادة:</strong> ${subject}</p>
+                    <p><strong>📝 الموضوع:</strong> ${topic}</p>
+                    <p><strong>🎓 المستوى:</strong> ${grade}</p>
+                `;
+
+                // Display preview content if available
+                const content = data.content || data.preview || data.summary || data.output || data.result || data.text || 'تم إنشاء المحتوى بنجاح';
+                const formattedContent = formatContentOutput(content);
+                contentResultText.innerHTML = formattedContent;
+
+                contentResult.classList.add('show');
+                
+                // Scroll to result
+                contentResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+            } catch (err) {
+                contentResultInfo.innerHTML = `<p style="color: #e74c3c;"><strong>❌ حدث خطأ</strong></p>`;
+                contentResultText.innerHTML = `<p style="color: #e74c3c;">حدث خطأ أثناء إنشاء المحتوى: ${escapeHtml(err.message)}</p><p>يرجى التأكد من:</p><ul><li>اتصالك بالإنترنت</li><li>صحة رابط الـ Webhook</li><li>تشغيل سيرفر n8n</li></ul>`;
+                contentResult.classList.add('show');
+            } finally {
+                contentLoading.classList.remove('show');
+                document.getElementById('contentSubmitBtn').disabled = false;
+                isProcessing = false;
+            }
+        });
+
+        function formatContentOutput(content) {
+            // Convert markdown-style headers to HTML
+            let formatted = String(content)
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+                .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+                .replace(/^\*\*(.+?)\*\*$/gm, '<strong>$1</strong>')
+                .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^- (.+)$/gm, '<li>$1</li>')
+                .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>');
+            
+            // Wrap consecutive <li> items in <ul>
+            formatted = formatted.replace(/(<li>.*?<\/li>\n?)+/gs, '<ul>$&</ul>');
+            
+            // Add line breaks for readability
+            formatted = formatted.replace(/\n\n/g, '<br><br>');
+            
+            return formatted;
+        }
+
+        // Update button text when content type changes
+        document.querySelectorAll('input[name="contentType"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const buttonTexts = {
+                    'educational': 'إنشاء المحتوى التعليمي',
+                    'presentation': 'إنشاء العرض التقديمي',
+                    'worksheet': 'إنشاء ورقة العمل'
+                };
+                document.getElementById('contentSubmitBtn').querySelector('span:first-child').textContent = buttonTexts[e.target.value];
+            });
+        });
+
+        /* --------------------
+           Subject lists by grade level and track
+           -------------------- */
+        const subjectsByGrade = {
+            'elementary': {
+                'الأول الابتدائي': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية'],
+                'الثاني الابتدائي': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية'],
+                'الثالث الابتدائي': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
+                'الرابع الابتدائي': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
+                'الخامس الابتدائي': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
+                'السادس الابتدائي': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية']
+            },
+            'middle': {
+                'الأول متوسط': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
+                'الثاني متوسط': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية'],
+                'الثالث متوسط': ['الرياضيات', 'العلوم', 'اللغة العربية', 'التربية الإسلامية', 'اللغة الإنجليزية', 'الدراسات الاجتماعية']
+            }
+        };
+
+        // Subject lists by track for secondary school
+        const subjectsByTrack = {
+            'العام': {
+                'الأول ثانوي': ['الرياضيات 3','الرياضيات 2','الرياضيات 1', '3 التقنية الرقمية','2 التقنية الرقمية','1 التقنية الرقمية', '1 الكيمياء', '1 الأحياء', 'اللغة العربية 2','اللغة العربية 1', 'اللغة الإنجليزية 3','اللغة الإنجليزية 2','اللغة الإنجليزية 1', 'الدراسات الإجتماعيه 1','1 الحديث','التربية المهنية','1 الفيزياء','1 علم البيئة','المعرفة المالية','القرآن الكريم وتفسيره', 'التفكير الناقد'],
+                'الثاني ثانوي': ['الرياضيات 2', 'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة العربية 2', 'اللغة الإنجليزية 2', 'التربية الإسلامية', 'الدراسات الاجتماعية'],
+                'الثالث ثانوي': ['الرياضيات 3', 'الفيزياء', 'الكيمياء', 'الأحياء', 'اللغة العربية 3', 'اللغة الإنجليزية 3', 'التربية الإسلامية', 'الدراسات الاجتماعية']
+            },
+            'علوم الحاسب والهندسة': {
+                'الأول ثانوي': ['الرياضيات 3','الرياضيات 2','الرياضيات 1', '3 التقنية الرقمية','2 التقنية الرقمية','1 التقنية الرقمية', '1 الكيمياء', '1 الأحياء', 'اللغة العربية 2','اللغة العربية 1', 'اللغة الإنجليزية 3','اللغة الإنجليزية 2','اللغة الإنجليزية 1', 'الدراسات الإجتماعيه 1','1 الحديث','التربية المهنية','1 الفيزياء','1 علم البيئة','المعرفة المالية','القرآن الكريم وتفسيره', 'التفكير الناقد'],
+                'الثاني ثانوي': ['الرياضيات 2', 'الفيزياء', 'الكيمياء', 'اللغة العربية 2', 'اللغة الإنجليزية 2', 'التربية الإسلامية', 'علوم الحاسب', 'الهندسة', 'التقنية الرقمية المتقدمة'],
+                'الثالث ثانوي': ['الرياضيات 3', 'الفيزياء المتقدمة', 'اللغة العربية 3', 'اللغة الإنجليزية 3', 'التربية الإسلامية', 'علوم الحاسب المتقدمة', 'الهندسة المتقدمة', 'الذكاء الاصطناعي']
+            },
+            'الصحة والحياة': {
+                'الأول ثانوي': ['الرياضيات 3','الرياضيات 2','الرياضيات 1', '3 التقنية الرقمية','2 التقنية الرقمية','1 التقنية الرقمية', '1 الكيمياء', '1 الأحياء', 'اللغة العربية 2','اللغة العربية 1', 'اللغة الإنجليزية 3','اللغة الإنجليزية 2','اللغة الإنجليزية 1', 'الدراسات الإجتماعيه 1','1 الحديث','التربية المهنية','1 الفيزياء','1 علم البيئة','المعرفة المالية','القرآن الكريم وتفسيره', 'التفكير الناقد'],
+                'الثاني ثانوي': ['الرياضيات 2', 'الأحياء', 'الكيمياء الحيوية', 'اللغة العربية 2', 'اللغة الإنجليزية 2', 'التربية الإسلامية', 'علوم الصحة', 'التشريح وعلم وظائف الأعضاء'],
+                'الثالث ثانوي': ['الأحياء المتقدمة', 'الكيمياء العضوية', 'اللغة العربية 3', 'اللغة الإنجليزية 3', 'التربية الإسلامية', 'الطب والصحة', 'علم الأمراض', 'الصحة العامة']
+            },
+            'إدارة الأعمال': {
+                'الأول ثانوي': ['الرياضيات 3','الرياضيات 2','الرياضيات 1', '3 التقنية الرقمية','2 التقنية الرقمية','1 التقنية الرقمية', '1 الكيمياء', '1 الأحياء', 'اللغة العربية 2','اللغة العربية 1', 'اللغة الإنجليزية 3','اللغة الإنجليزية 2','اللغة الإنجليزية 1', 'الدراسات الإجتماعيه 1','1 الحديث','التربية المهنية','1 الفيزياء','1 علم البيئة','المعرفة المالية','القرآن الكريم وتفسيره', 'التفكير الناقد'],
+                'الثاني ثانوي': ['الرياضيات 2', 'اللغة العربية 2', 'اللغة الإنجليزية 2', 'التربية الإسلامية', 'إدارة الأعمال', 'المحاسبة', 'الاقتصاد', 'التسويق'],
+                'الثالث ثانوي': ['اللغة العربية 3', 'اللغة الإنجليزية 3', 'التربية الإسلامية', 'إدارة الأعمال المتقدمة', 'المحاسبة المالية', 'ريادة الأعمال', 'التجارة الإلكترونية', 'القانون التجاري']
+            },
+            'الشرعي': {
+                'الأول ثانوي': ['الرياضيات 3','الرياضيات 2','الرياضيات 1', '3 التقنية الرقمية','2 التقنية الرقمية','1 التقنية الرقمية', '1 الكيمياء', '1 الأحياء', 'اللغة العربية 2','اللغة العربية 1', 'اللغة الإنجليزية 3','اللغة الإنجليزية 2','اللغة الإنجليزية 1', 'الدراسات الإجتماعيه 1','1 الحديث','التربية المهنية','1 الفيزياء','1 علم البيئة','المعرفة المالية','القرآن الكريم وتفسيره', 'التفكير الناقد'],
+                'الثاني ثانوي': ['اللغة العربية 2', 'اللغة الإنجليزية 2', 'التربية الإسلامية', 'الدراسات الاجتماعية', 'القرآن الكريم', 'التفسير', 'الحديث', 'الفقه', 'التوحيد'],
+                'الثالث ثانوي': ['اللغة العربية 3', 'اللغة الإنجليزية 3', 'التربية الإسلامية', 'القرآن الكريم وعلومه', 'التفسير المتقدم', 'الحديث وعلومه', 'الفقه وأصوله', 'العقيدة', 'السيرة النبوية']
+            }
+        };
+
+        function getGradeCategory(grade) {
+            if (grade.includes('الابتدائي')) return 'elementary';
+            if (grade.includes('متوسط')) return 'middle';
+            if (grade.includes('ثانوي')) return 'high';
+            return null;
+        }
+
+        function isSecondaryGrade(grade) {
+            return ['الأول ثانوي', 'الثاني ثانوي', 'الثالث ثانوي'].includes(grade);
+        }
+
+        function updateSubjectList(grade, track = null) {
+            const examSubject = document.getElementById('examSubject');
+            
+            // For secondary grades, track is required
+            if (isSecondaryGrade(grade)) {
+                if (!track) {
+                    examSubject.innerHTML = '<option value="">اختر المسار أولاً</option>';
+                    examSubject.disabled = true;
+                    return;
+                }
+                
+                // Get subjects based on track and grade
+                if (subjectsByTrack[track] && subjectsByTrack[track][grade]) {
+                    examSubject.innerHTML = '<option value="">اختر المادة</option>';
+                    const subjects = subjectsByTrack[track][grade];
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject;
+                        option.textContent = subject;
+                        examSubject.appendChild(option);
+                    });
+                    examSubject.disabled = false;
+                } else {
+                    examSubject.innerHTML = '<option value="">لا توجد مواد متاحة</option>';
+                    examSubject.disabled = true;
+                }
+            } else {
+                // For non-secondary grades
+                const category = getGradeCategory(grade);
+                examSubject.innerHTML = '<option value="">اختر المادة</option>';
+                
+                if (category && subjectsByGrade[category][grade]) {
+                    const subjects = subjectsByGrade[category][grade];
+                    subjects.forEach(subject => {
+                        const option = document.createElement('option');
+                        option.value = subject;
+                        option.textContent = subject;
+                        examSubject.appendChild(option);
+                    });
+                    examSubject.disabled = false;
+                } else {
+                    examSubject.disabled = true;
+                    examSubject.innerHTML = '<option value="">اختر المستوى أولاً</option>';
+                }
+            }
+        }
+        /* --------------------
+           Exam upload & processing
+           -------------------- */
+        function renderAttachedFiles() {
+            examAttachedFiles.innerHTML = '';
+            uploadedFiles.forEach((f, idx) => {
+                const tag = document.createElement('div');
+                tag.className = 'file-tag';
+                const name = document.createElement('div');
+                name.className = 'file-tag-name';
+                name.textContent = f.name;
+                const remove = document.createElement('div');
+                remove.className = 'file-tag-remove';
+                remove.innerHTML = '✖';
+                remove.title = 'Remove';
+                remove.addEventListener('click', () => {
+                    uploadedFiles.splice(idx, 1);
+                    renderAttachedFiles();
+                });
+                tag.appendChild(name);
+                tag.appendChild(remove);
+                examAttachedFiles.appendChild(tag);
+            });
+        }
+
+        // Grade selection handler
+        document.getElementById('examGrade').addEventListener('change', (e) => {
+            const grade = e.target.value;
+            const examTrackGroup = document.getElementById('examTrackGroup');
+            const examTrack = document.getElementById('examTrack');
+            const examSubject = document.getElementById('examSubject');
+            
+            if (isSecondaryGrade(grade)) {
+                // Show track selection for secondary grades
+                examTrackGroup.style.display = 'block';
+                examTrack.required = true;
+                examSubject.disabled = true;
+                examSubject.innerHTML = '<option value="">اختر المسار أولاً</option>';
+                examTrack.value = '';
+            } else if (grade) {
+                // Hide track for non-secondary grades and update subjects
+                examTrackGroup.style.display = 'none';
+                examTrack.required = false;
+                examTrack.value = '';
+                updateSubjectList(grade);
+            } else {
+                // No grade selected
+                examTrackGroup.style.display = 'none';
+                examTrack.required = false;
+                examTrack.value = '';
+                examSubject.disabled = true;
+                examSubject.innerHTML = '<option value="">اختر المستوى أولاً</option>';
+            }
+        });
+
+        // Track selection handler (for secondary grades)
+        document.getElementById('examTrack').addEventListener('change', (e) => {
+            const grade = document.getElementById('examGrade').value;
+            const track = e.target.value;
+            if (track && isSecondaryGrade(grade)) {
+                updateSubjectList(grade, track);
+            } else {
+                const examSubject = document.getElementById('examSubject');
+                examSubject.innerHTML = '<option value="">اختر المسار أولاً</option>';
+                examSubject.disabled = true;
+            }
+        });
+
+        examFileUpload.addEventListener('click', () => examFileInput.click());
+        examFileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files || []);
+            uploadedFiles.push(...files);
+            renderAttachedFiles();
+            examFileInput.value = '';
+        });
+
+        ['dragenter', 'dragover'].forEach(evt => {
+            examFileUpload.addEventListener(evt, (e) => {
+                e.preventDefault(); e.stopPropagation();
+                examFileUpload.classList.add('dragover');
+            });
+        });
+        ['dragleave', 'drop'].forEach(evt => {
+            examFileUpload.addEventListener(evt, (e) => {
+                e.preventDefault(); e.stopPropagation();
+                examFileUpload.classList.remove('dragover');
+            });
+        });
+        examFileUpload.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            if (!dt) return;
+            const files = Array.from(dt.files || []);
+            uploadedFiles.push(...files);
+            renderAttachedFiles();
+        });
+
+        examForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (isProcessing) return;
+            const type = document.getElementById('examType').value;
+            const subject = document.getElementById('examSubject').value;
+            const topic = document.getElementById('examTopic').value.trim();
+            const grade = document.getElementById('examGrade').value;
+            const track = document.getElementById('examTrack').value;
+            
+            if (!type || !subject || !topic || !grade) return alert('يرجى ملء جميع الحقول.');
+            
+            // Validate track for secondary grades
+            if (isSecondaryGrade(grade) && !track) {
+                return alert('يرجى اختيار المسار للمرحلة الثانوية.');
+            }
+
+            examLoading.classList.add('show');
+            examResult.classList.remove('show');
+            isProcessing = true;
+
+            try {
+                const formData = new FormData();
+                formData.append('sessionId', sessionId);
+                formData.append('type', 'exam_' + type);
+                formData.append('language', currentLanguage);
+                formData.append('subject', subject);
+                formData.append('topic', topic);
+                formData.append('grade', grade);
+                if (track) formData.append('track', track);
+                formData.append('timestamp', new Date().toISOString());
+
+                uploadedFiles.forEach((f, i) => {
+                    formData.append('file_' + i, f, f.name);
+                });
+
+                // send a list of file names for n8n
+                const fileNames = uploadedFiles.map(f => f.name);
+                formData.append('fileNames', JSON.stringify(fileNames));
+
+                const res = await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    throw new Error(`Webhook error: ${res.status} ${txt}`);
+                }
+
+                const data = await res.json().catch(() => ({}));
+                const info = data.summary || `${type === 'create' ? 'إنشاء' : 'تصحيح'} — ${subject} — ${topic}`;
+                const resultText = data.result || data.output || data.text || 'تمت معالجة الامتحان بنجاح.';
+                examResultInfo.textContent = info;
+                examResultText.innerHTML = `<div class="markdown-output">${escapeHtml(resultText)}</div>`;
+                examResult.classList.add('show');
+
+                uploadedFiles = [];
+                renderAttachedFiles();
+            } catch (err) {
+                examResultInfo.textContent = 'حدث خطأ أثناء معالجة الامتحان.';
+                examResultText.innerHTML = `<div class="markdown-output"><strong>${escapeHtml(err.message)}</strong></div>`;
+                examResult.classList.add('show');
+            } finally {
+                examLoading.classList.remove('show');
+                isProcessing = false;
+            }
+        });
+
+        /* --------------------
+           Event Listeners
+           -------------------- */
+        nextBtn.addEventListener('click', nextQuestion);
+        prevBtn.addEventListener('click', prevQuestion);
+        retakeBtn.addEventListener('click', retakeQuiz);
+        backToChatBtn.addEventListener('click', backToChat);
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const section = item.dataset.section;
+                navItems.forEach(n => n.classList.remove('active'));
+                item.classList.add('active');
+                document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+                const target = document.getElementById(section + 'Section');
+                if (target) target.classList.add('active');
+                sidebar.classList.remove('mobile-open');
+                mobileOverlay.classList.remove('active');
+            });
+        });
+
+                quickActions.forEach(card => {
+            card.addEventListener('click', () => {
+                const msg = card.dataset.message || '';
+                if (msg.includes('اختباراً تفاعلياً') || msg.includes('ابدأ اختبار')) {
+                    startQuizAssessment();
+                } else {
+                    chatInput.value = msg;
+                    sendBtn.disabled = false;
+                    sendChatFromInput();
+                }
+            });
+        });
+
+        function autoResizeTextarea(el) {
+            el.style.height = 'auto';
+            el.style.height = (el.scrollHeight) + 'px';
+        }
+
+        chatInput.addEventListener('input', () => {
+            autoResizeTextarea(chatInput);
+            sendBtn.disabled = chatInput.value.trim() === '' || isProcessing;
+        });
+
+        chatInput.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' && !e.shiftKey)) {
+                e.preventDefault();
+                sendChatFromInput();
+            }
+        });
+
+        function sendChatFromInput() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+            chatInput.value = '';
+            autoResizeTextarea(chatInput);
+            sendBtn.disabled = true;
+            sendChatToWebhook(text);
+        }
+
+        sendBtn.addEventListener('click', () => sendChatFromInput());
+
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            toggleSidebar.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+        });
+
+        mobileMenuBtn.addEventListener('click', () => {
+            sidebar.classList.add('mobile-open');
+            mobileOverlay.classList.add('active');
+        });
+
+        mobileOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('mobile-open');
+            mobileOverlay.classList.remove('active');
+        });
+
+        langToggle.addEventListener('click', () => {
+            setLanguage(currentLanguage === 'ar' ? 'en' : 'ar');
+        });
+
+        function escapeHtml(unsafe) {
+            if (unsafe === null || unsafe === undefined) return '';
+            return String(unsafe)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        (function init() {
+            setLanguage('ar');
+        })();
+    </script>
+</body>
+</html>
